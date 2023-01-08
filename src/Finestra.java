@@ -34,9 +34,14 @@ public class Finestra extends TagGenerator{
         GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = graphics.getScreenDevices();
 
+        // Get screen dimension to scale the font
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        double widthFont = screenSize.getWidth();
+        double heightFont = screenSize.getHeight();
+
         // Create a new font
         try {
-            customFont = Font.createFont(Font.TRUETYPE_FONT, new File("C:/Users/39353/Downloads/VCR_OSD_MONO_1.001.ttf")).deriveFont(100f);
+            customFont = Font.createFont(Font.TRUETYPE_FONT, new File("C:/Users/39353/Downloads/VCR_OSD_MONO_1.001.ttf")).deriveFont((float)((widthFont+heightFont)/30));
             graphics.registerFont(customFont);
         } catch(Exception ex){
             ex.printStackTrace();
