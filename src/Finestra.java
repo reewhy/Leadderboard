@@ -31,6 +31,7 @@ public class Finestra extends TagGenerator{
     JTextField nomeSecondoSfidante;
     JTextField cognomeSecondoSfidante;
     JLabel challNames;
+    public static Finestra f;
     static SettingsPane settings;
     int width;
     int height;
@@ -113,7 +114,6 @@ public class Finestra extends TagGenerator{
         nomeSecondoSfidante.setBounds(10, 160, 120, 20);
         secondoSfidanteCognomeTxt.setBounds(150, 140, 120, 20);
         cognomeSecondoSfidante.setBounds(150, 160, 120, 20);
-
         // Create action listener for buttons
         screenShotBtn.addActionListener(this::screenshotFrame);
         textBtn.addActionListener(this::textList);
@@ -182,7 +182,7 @@ public class Finestra extends TagGenerator{
         challNames.setFont(customFont);
         challNames.setVisible(false);
         // Set background black and change font
-        people.setBackground(Color.BLACK);
+        people.setBackground(new Color(0, 0, 0));
         people.setFont(customFont);
 
         // Add UI to the frame
@@ -466,7 +466,7 @@ public class Finestra extends TagGenerator{
         // Create settings frame
         settings = new SettingsPane();
         // Create a new frame
-        Finestra f = new Finestra(settings.mainScreen, settings.secondScreen);
+        f = new Finestra(settings.mainScreen, settings.secondScreen);
 
         // Create new json file if needed
         File config = new File("config.json");
@@ -500,7 +500,7 @@ public class Finestra extends TagGenerator{
                 int wins = rset.getInt("Wins");
                 int loss = rset.getInt("Loss");
                 // Add i, name, wins, loss in the "persone" list
-                persone.add("<html><font color='#ffff00'>" + i + "</font><font color='#ff33cc'> " + name + "</font> <font color = '#00ff00'>" + wins + "</font> <font color = '#ff0000'>" + loss + "</font></html>");
+                persone.add(settings.personFormat.getText().replace("%pos", String.valueOf(i)).replace("%tag", name).replace("%wins", String.valueOf(wins)).replace("%loss", String.valueOf(loss)).replace("%c1", settings.c1).replace("%c2", settings.c2).replace("%c3", settings.c3).replace("%c4", settings.c4));
                 // Increase i
                 i++;
             }
