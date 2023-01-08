@@ -1,10 +1,15 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.io.FilenameUtils;
 
 public class Finestra extends TagGenerator{
     // Config connection values
@@ -26,10 +31,14 @@ public class Finestra extends TagGenerator{
     JTextField nomeSecondoSfidante;
     JTextField cognomeSecondoSfidante;
     JLabel challNames;
+    SettingsPane settings;
     int width;
     int height;
+    static List<String> results = new ArrayList<>();
 
     public Finestra(int mainmonitor, int secondmonitor){
+        // Create settings frame
+        settings = new SettingsPane();
         // Get all the screens
         GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = graphics.getScreenDevices();
@@ -41,7 +50,7 @@ public class Finestra extends TagGenerator{
 
         // Create a new font
         try {
-            customFont = Font.createFont(Font.TRUETYPE_FONT, new File("C:/Users/39353/Downloads/VCR_OSD_MONO_1.001.ttf")).deriveFont((float)((widthFont+heightFont)/30));
+            customFont = Font.createFont(Font.TRUETYPE_FONT, new File("C:/Users/39353/Downloads/VCR_OSD_MONO_1.001.ttf")).deriveFont((float)((widthFont+heightFont)/28));
             graphics.registerFont(customFont);
         } catch(Exception ex){
             ex.printStackTrace();
@@ -67,6 +76,10 @@ public class Finestra extends TagGenerator{
         JLabel tagTxt = new JLabel("Tag");
         JButton match = new JButton("Sfida");
 
+        JButton settingsBtn = new JButton("Opzioni");
+        JButton screenShotBtn = new JButton("Screenshot");
+        JButton textBtn = new JButton("Testo");
+
         JButton aggiungiVittoria = new JButton("Add Vinci");
         JButton aggiungiPerdita = new JButton("Add Perdi");
         JButton rimuoviVittoria = new JButton("Rem Vinci");
@@ -78,6 +91,9 @@ public class Finestra extends TagGenerator{
         JLabel secondoSfidanteCognomeTxt = new JLabel("Cognome");
 
         // Set UI bounds
+        settingsBtn.setBounds(10, 300, 100, 30);
+        screenShotBtn.setBounds(370, 300, 100, 30);
+        textBtn.setBounds(260, 300, 100, 30);
         nameInput.setBounds(10, 30, 120, 20);
         lastNameInput.setBounds(150, 30, 120, 20);
         tagInput.setBounds(300, 30, 120, 20);
@@ -101,14 +117,19 @@ public class Finestra extends TagGenerator{
         cognomeSecondoSfidante.setBounds(150, 160, 120, 20);
 
         // Create action listener for buttons
+        screenShotBtn.addActionListener(this::screenshotFrame);
+        textBtn.addActionListener(this::textList);
         addPerson.addActionListener(this::clickNewPerson);
         match.addActionListener(this::startMatch);
         aggiungiVittoria.addActionListener(this::clickAddWin);
         aggiungiPerdita.addActionListener(this::clickAddLoss);
         rimuoviVittoria.addActionListener(this::clickRemWin);
         rimuoviPerdita.addActionListener(this::clickRemLoss);
+        settingsBtn.addActionListener(this::openSettings);
 
         // Add everything on the manager frame
+        manager.add(settingsBtn);
+        manager.add(textBtn);
         manager.add(tagTxt);
         manager.add(tagInput);
         manager.add(o);
@@ -130,6 +151,7 @@ public class Finestra extends TagGenerator{
         manager.add(lastNameInput);
         manager.add(nameTxt);
         manager.add(lastNameTxt);
+        manager.add(screenShotBtn);
 
         // Set frame size and configs
         manager.setSize(500, 400);
@@ -170,6 +192,104 @@ public class Finestra extends TagGenerator{
         lead.add(people);
         // Get update the frame infos
         UpdateList();
+    }
+
+    private void openSettings(ActionEvent event) {
+        // Open settings tab
+        settings.setVisible(true);
+    }
+
+    private void textList(ActionEvent event) {
+        // Create a new custom pane
+        CustomPane pane = new CustomPane();
+        // Try to connect to database
+        try(Connection conn = DriverManager.getConnection(link, name, pass);
+            Statement stmt = conn.createStatement()){
+            String strSelect = "SELECT * FROM persone";
+            ResultSet rset = stmt.executeQuery(strSelect);
+
+            // Get all the infos and format it into an ArrayList
+            while(rset.next()){
+                String name = rset.getString("Name");
+                String lastname = rset.getString("LastName");
+                String tag = rset.getString("Tag");
+                int wins = rset.getInt("Wins");
+                int loss = rset.getInt("Loss");
+                results.add(settings.textFormat.getText().replace("%n", name).replace("%c", lastname).replace("%t", tag).replace("%v", String.valueOf(wins)).replace("%s", String.valueOf(loss)));
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        // Create the text
+        StringBuilder text = new StringBuilder();
+        for(String result: results){
+            text.append(result).append("\n");
+        }
+        pane.textField.setText(text.toString());
+    }
+
+    public static void saveText(ActionEvent event){
+        // Create  a new file chooser dialog
+        JFileChooser fileChooser = new JFileChooser();
+        // Set the extensions filters
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter txtFilter = new FileNameExtensionFilter("Text files", "txt");
+        fileChooser.addChoosableFileFilter(txtFilter);
+        // Save the file
+        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try{
+                // Create new file if needed
+                if(file.createNewFile()){
+                    System.out.println("File creato1");
+                }
+                // Create the writer
+                FileWriter writer = new FileWriter(file);
+                // Create the string
+                StringBuilder text = new StringBuilder();
+                for(String result: results){
+                    text.append(result).append("\n");
+                }
+                // Write the text into the file
+                writer.write(text.toString());
+                writer.close();
+            } catch(Exception ex){
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private void screenshotFrame(ActionEvent event) {
+        // Create  a new file chooser dialog
+        JFileChooser fileChooser = new JFileChooser();
+        // Set the extensions filters
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter jpgFilter = new FileNameExtensionFilter("JPG Images", "jpg");
+        FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG Images", "png");
+        fileChooser.addChoosableFileFilter(jpgFilter);
+        fileChooser.addChoosableFileFilter(pngFilter);
+        // Save the file
+        if (fileChooser.showSaveDialog(manager) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try{
+                // Get a screenshot of the frame
+                ImageIO.write(getScreenshot(lead), FilenameUtils.getExtension(file.getName()), file);
+            } catch(Exception ex){
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public static BufferedImage getScreenshot(Component component){
+        // Create a new bufferedimage
+        BufferedImage image = new BufferedImage(
+                component.getWidth(),
+                component.getHeight(),
+                BufferedImage.TYPE_INT_RGB
+        );
+        // Draw the frame on the bufferedimage
+        component.paint(image.createGraphics());
+        return image;
     }
 
     private void clickAddWin(ActionEvent event) {
@@ -386,6 +506,16 @@ public class Finestra extends TagGenerator{
         for(JFrame frame: frames){
             frame.setVisible(false);
         }
+
+        // Create new json file if needed
+        File config = new File("config.json");
+        try{
+            if(config.createNewFile()){
+                System.out.println("File creato");
+            }
+        } catch(Exception ex){
+            ex.printStackTrace();
+        }
     }
 
     public void UpdateList(){
@@ -492,8 +622,6 @@ public class Finestra extends TagGenerator{
         } else if(result==JOptionPane.NO_OPTION){
             secondWins++;
             firstLoss++;
-        }else{
-            return;
         }
         // Change the amount of wins and losses the contestants have in the database
         String strUpdateFirst = "update persone set Wins=" + firstWins + ", Loss=" + firstLoss + " where Tag='"+firstTag+"'";
