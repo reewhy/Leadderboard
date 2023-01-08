@@ -31,14 +31,12 @@ public class Finestra extends TagGenerator{
     JTextField nomeSecondoSfidante;
     JTextField cognomeSecondoSfidante;
     JLabel challNames;
-    SettingsPane settings;
+    static SettingsPane settings;
     int width;
     int height;
     static List<String> results = new ArrayList<>();
 
     public Finestra(int mainmonitor, int secondmonitor){
-        // Create settings frame
-        settings = new SettingsPane();
         // Get all the screens
         GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = graphics.getScreenDevices();
@@ -465,47 +463,10 @@ public class Finestra extends TagGenerator{
     }
 
     public static void main(String[] args){
-        // Get all the graphics devices
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gs = ge.getScreenDevices();
-        // Create the frames
-        JFrame[] frames = {new JFrame(gs[0].getDefaultConfiguration()),
-                           new JFrame(gs[1].getDefaultConfiguration())};
-
-        // Config and show the frames
-        int j = 0;
-        for(JFrame frame: frames){
-            frame.setSize(400, 200);
-            frame.setTitle("Monitor #" + j);
-            frame.add(new JLabel("Questo è il monitor #" + j));
-            frame.setVisible(true);
-            j++;
-        }
-
-        // Make a selection to get which one will be the main monitor
-        String[] options = {"0", "1"};
-        int result = JOptionPane.showOptionDialog(
-                null,
-                "Qual è il monitor principale?",
-                "Selezione monitor",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                options,
-                options[0]
-        );
-        // Get the selected option and create the frames
-        if(result == JOptionPane.YES_OPTION){
-            Finestra f = new Finestra(0, 1);
-        } else if(result==JOptionPane.NO_OPTION){
-            Finestra f = new Finestra(1, 0);
-        }else{
-            return;
-        }
-        // Hide the info frames
-        for(JFrame frame: frames){
-            frame.setVisible(false);
-        }
+        // Create settings frame
+        settings = new SettingsPane();
+        // Create a new frame
+        Finestra f = new Finestra(settings.mainScreen, settings.secondScreen);
 
         // Create new json file if needed
         File config = new File("config.json");
