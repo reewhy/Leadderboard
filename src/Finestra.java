@@ -29,21 +29,20 @@ public class Finestra extends TagGenerator{
     int width;
     int height;
 
-    public Finestra(){
+    public Finestra(int mainmonitor, int secondmonitor){
         // Get all the screens
         GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = graphics.getScreenDevices();
 
         // Create a new font
         try {
-            customFont = Font.createFont(Font.TRUETYPE_FONT, new File("C:/Users/39353/Downloads/VCR_OSD_MONO_1.001.ttf")).deriveFont(50f);
+            customFont = Font.createFont(Font.TRUETYPE_FONT, new File("C:/Users/39353/Downloads/VCR_OSD_MONO_1.001.ttf")).deriveFont(100f);
             graphics.registerFont(customFont);
         } catch(Exception ex){
             ex.printStackTrace();
         }
-
         // Select first screen
-        GraphicsDevice firstScreen = gs[0];
+        GraphicsDevice firstScreen = gs[mainmonitor];
         // Create a new frame using the first screen configurations
         manager = new JFrame(firstScreen.getDefaultConfiguration());
 
@@ -134,7 +133,7 @@ public class Finestra extends TagGenerator{
         manager.setVisible(true);
 
         // Get second screen
-        GraphicsDevice secondScreen = gs[1];
+        GraphicsDevice secondScreen = gs[secondmonitor];
         // Get second screen's width and height
         width = secondScreen.getDisplayMode().getWidth();
         height = secondScreen.getDisplayMode().getHeight();
@@ -150,6 +149,9 @@ public class Finestra extends TagGenerator{
         // Create the UI
         challNames = new JLabel();
         people = new JList<>();
+
+        // Clear the selection whenever clicked
+        people.addListSelectionListener(e -> people.clearSelection());
 
         // Set font and make it invisible
         challNames.setFont(customFont);
@@ -338,7 +340,47 @@ public class Finestra extends TagGenerator{
     }
 
     public static void main(String[] args){
-        Finestra f = new Finestra();
+        // Get all the graphics devices
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gs = ge.getScreenDevices();
+        // Create the frames
+        JFrame[] frames = {new JFrame(gs[0].getDefaultConfiguration()),
+                           new JFrame(gs[1].getDefaultConfiguration())};
+
+        // Config and show the frames
+        int j = 0;
+        for(JFrame frame: frames){
+            frame.setSize(400, 200);
+            frame.setTitle("Monitor #" + j);
+            frame.add(new JLabel("Questo è il monitor #" + j));
+            frame.setVisible(true);
+            j++;
+        }
+
+        // Make a selection to get which one will be the main monitor
+        String[] options = {"0", "1"};
+        int result = JOptionPane.showOptionDialog(
+                null,
+                "Qual è il monitor principale?",
+                "Selezione monitor",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+        // Get the selected option and create the frames
+        if(result == JOptionPane.YES_OPTION){
+            Finestra f = new Finestra(0, 1);
+        } else if(result==JOptionPane.NO_OPTION){
+            Finestra f = new Finestra(1, 0);
+        }else{
+            return;
+        }
+        // Hide the info frames
+        for(JFrame frame: frames){
+            frame.setVisible(false);
+        }
     }
 
     public void UpdateList(){
